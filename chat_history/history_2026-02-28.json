@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-02-28T09:19:24.366565",
+    "query": "ACC hợp long 3 ngày gần đây",
+    "response": "{\"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": []}"
+  },
+  {
+    "timestamp": "2026-02-28T09:19:59.170127",
+    "query": "SK5 3 ngày gần đây",
+    "response": "{\"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": []}"
+  },
+  {
+    "timestamp": "2026-02-28T09:33:34.599257",
+    "query": "ACC Hợp long 3 ngày gần đây",
+    "response": "{\"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Dao động hợp long\", \"Device\": \"ACC_RM2_FFT_01\", \"Tên biến\": \"Qb_HL_var_3_freq\", \"Loại thiết bị\": \"acc\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T09:33:56.178650",
+    "query": "ứng suất SK5 3 ngày gần đây",
+    "response": "{\"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Ứng suất bản đáy thượng lưu đốt SK5 (SG1_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(13)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp thượng lưu đốt SK5 (SG2_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(14)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(15)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp hạ lưu đốt SK5 (SG4_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(16)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Nhiệt độ đốt SK5 (P19_PT100_SK5)\", \"Device\": \"P19 - PT100\", \"Tên biến\": \"Pt100_4w(5)\", \"Loại thiết bị\": \"t\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T09:44:06.801982",
+    "query": "Kiểm tra các thiết bị tại đốt SK5",
+    "response": "{\"intent\": \"check_status\", \"start_date\": \"2026-01-29\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Ứng suất bản đáy thượng lưu đốt SK5 (SG1_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(13)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp thượng lưu đốt SK5 (SG2_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(14)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(15)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp hạ lưu đốt SK5 (SG4_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(16)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Nhiệt độ đốt SK5 (P19_PT100_SK5)\", \"Device\": \"P19 - PT100\", \"Tên biến\": \"Pt100_4w(5)\", \"Loại thiết bị\": \"t\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T09:44:33.366941",
+    "query": "nhiệt độ đốt SK5 3 ngày gần đây",
+    "response": "{\"intent\": \"chart\", \"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Ứng suất bản đáy thượng lưu đốt SK5 (SG1_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(13)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp thượng lưu đốt SK5 (SG2_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(14)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(15)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp hạ lưu đốt SK5 (SG4_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(16)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Nhiệt độ đốt SK5 (P19_PT100_SK5)\", \"Device\": \"P19 - PT100\", \"Tên biến\": \"Pt100_4w(5)\", \"Loại thiết bị\": \"t\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T10:06:11.195425",
+    "query": "nhiệt độ đốt SK5 3 ngày gần đây",
+    "response": "{\"intent\": \"chart\", \"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Ứng suất bản đáy thượng lưu đốt SK5 (SG1_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(13)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp thượng lưu đốt SK5 (SG2_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(14)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(15)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp hạ lưu đốt SK5 (SG4_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(16)\", \"Loại thiết bị\": \"sg\"}, {\"Tên thiết bị\": \"Nhiệt độ đốt SK5 (P19_PT100_SK5)\", \"Device\": \"P19 - PT100\", \"Tên biến\": \"Pt100_4w(5)\", \"Loại thiết bị\": \"t\"}, {\"Tên thiết bị\": \"Dao động đốt SK5 P19\", \"Device\": \"ACC_RM2_FFT_01\", \"Tên biến\": \"P19_Qb_SK5_var_1_freq\", \"Loại thiết bị\": \"acc\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T10:10:17.348675",
+    "query": "nhiệt độ đốt SK5 3 ngày gần đây",
+    "response": "{\"intent\": \"chart\", \"start_date\": \"2026-02-25\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Nhiệt độ đốt SK5 (P19_PT100_SK5)\", \"Device\": \"P19 - PT100\", \"Tên biến\": \"Pt100_4w(5)\", \"Loại thiết bị\": \"T\"}]}"
+  },
+  {
+    "timestamp": "2026-02-28T10:10:30.715773",
+    "query": "Ứng suất SK5 3 tháng gần đây",
+    "response": "{\"intent\": \"chart\", \"start_date\": \"2025-11-30\", \"end_date\": \"2026-02-28\", \"is_latest\": false, \"devices\": [{\"Tên thiết bị\": \"Ứng suất bản đáy thượng lưu đốt SK5 (SG1_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(13)\", \"Loại thiết bị\": \"SG\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp thượng lưu đốt SK5 (SG2_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(14)\", \"Loại thiết bị\": \"SG\"}, {\"Tên thiết bị\": \"Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(15)\", \"Loại thiết bị\": \"SG\"}, {\"Tên thiết bị\": \"Ứng suất bản nắp hạ lưu đốt SK5 (SG4_SK5)\", \"Device\": \"P19 - SG\", \"Tên biến\": \"Contrainte(16)\", \"Loại thiết bị\": \"SG\"}]}"
+  }
+]

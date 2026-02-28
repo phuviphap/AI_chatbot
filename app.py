@@ -6,8 +6,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 import time
 from concurrent.futures import ThreadPoolExecutor
-from chatbot_core import NewsenseClient, chatbot, analyze_data
-import google.generativeai as genai
+from offline_chatbot import NewsenseClient, chatbot, analyze_data
 import difflib
 
 # --- PAGE CONFIGURATION ---
@@ -19,31 +18,6 @@ st.set_page_config(
 )
 
 # --- CACHED RESOURCES (FOR SPEED) ---
-@st.cache_resource
-def get_ai_model(api_key):
-    try:
-        if not api_key or api_key == "YOUR_KEY":
-            st.error("❌ Chưa nhập Gemini API Key trong config.json")
-            return None, None
-            
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        # Thử gọi một câu lệnh cực ngắn để check key có sống không
-        _ = model.generate_content("hi", generation_config={"max_output_tokens": 1})
-        return model, "Gemini 1.5 Flash"
-    except Exception as e:
-        error_msg = str(e)
-        if "403" in error_msg:
-            st.error("❌ API Key không có quyền truy cập (Permission Denied)")
-        elif "429" in error_msg:
-            st.error("⚠️ Quá tải (Rate limit exceeded). Đang dùng bản Free?")
-        elif "API_KEY_INVALID" in error_msg:
-            st.error("❌ API Key không hợp lệ. Vui lòng kiểm tra lại AI Studio.")
-        else:
-            st.error(f"❌ Lỗi khởi tạo: {error_msg}")
-        return None, None
-
 @st.cache_resource
 def get_newsense_client(base_url, user, password):
     try:
@@ -118,6 +92,35 @@ def fetch_data_parallel(devices, start, end):
     with ThreadPoolExecutor(max_workers=5) as executor:
         return [r for r in list(executor.map(fetch_single, devices)) if r]
 
+def fetch_status_parallel(devices):
+    client = st.session_state.newsense_client
+    dev_map = st.session_state.device_map
+
+    # Group variables by device id
+    device_groups = {}
+    for info in devices:
+        d_name = info.get("Device")
+        v_name = info.get("Tên biến")
+        d_id = dev_map.get(d_name) or dev_map.get(difflib.get_close_matches(d_name, dev_map.keys(), n=1, cutoff=0.7)[0] if difflib.get_close_matches(d_name, dev_map.keys()) else None)
+        if d_id and v_name:
+            if d_id not in device_groups:
+                device_groups[d_id] = {"name": d_name, "keys": []}
+            device_groups[d_id]["keys"].append(v_name)
+
+    def fetch_single(args):
+        d_id, d_info = args
+        try:
+            return client.get_latest_telemetry(d_id, d_info["name"], d_info["keys"])
+        except:
+            return []
+
+    results = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for res in executor.map(fetch_single, device_groups.items()):
+            if res:
+                results.extend(res)
+    return results
+
 # --- UI PAGES ---
 def chatbot_interaction_page():
     st.title("💬 Chatbot Interaction")
@@ -132,29 +135,38 @@ def chatbot_interaction_page():
                     res = json.loads(msg['content'])
                     st.json(res)
                     devices = res.get("devices", [])
-                    if devices and res.get("start_date"):
-                        data = fetch_data_parallel(devices, res["start_date"], res["end_date"])
-                        if data:
-                            if res.get("is_latest"):
-                                cols = st.columns(len(data))
-                                for j, item in enumerate(data):
-                                    latest = item['data'].iloc[-1]
-                                    cols[j].metric(item['label'], f"{latest['value']:.2f}")
-                            
-                            if st.toggle("Show Charts", value=True, key=f"tgl_{i}"):
-                                for idx, item in enumerate(data):
-                                    fig = go.Figure(go.Scatter(x=item['data']['ts'], y=item['data']['value'], name=item['label']))
-                                    st.plotly_chart(fig, use_container_width=True, key=f"ch_{i}_{idx}")
+                    intent = res.get("intent", "chart")
+                    if devices:
+                        if intent == "check_status":
+                            status_data = fetch_status_parallel(devices)
+                            if status_data:
+                                df_status = pd.DataFrame(status_data)
+                                st.dataframe(df_status, use_container_width=True)
+                            else:
+                                st.warning("Không lấy được trạng thái thiết bị.")
+                        elif res.get("start_date"):
+                            data = fetch_data_parallel(devices, res["start_date"], res["end_date"])
+                            if data:
+                                if res.get("is_latest"):
+                                    cols = st.columns(len(data))
+                                    for j, item in enumerate(data):
+                                        latest = item['data'].iloc[-1]
+                                        cols[j].metric(item['label'], f"{latest['value']:.2f}")
                                 
-                                if st.button("🔍 AI Analysis", key=f"an_btn_{i}"):
-                                    with st.spinner("Analyzing..."):
-                                        st.info(analyze_data(data, st.session_state.chat_history[i-1]['content'], st.session_state.gemini_model))
+                                if st.toggle("Show Charts", value=True, key=f"tgl_{i}"):
+                                    for idx, item in enumerate(data):
+                                        fig = go.Figure(go.Scatter(x=item['data']['ts'], y=item['data']['value'], name=item['label']))
+                                        st.plotly_chart(fig, use_container_width=True, key=f"ch_{i}_{idx}")
+                                    
+                                    if st.button("🔍 Analysis", key=f"an_btn_{i}"):
+                                        with st.spinner("Analyzing..."):
+                                            st.info(analyze_data(data, st.session_state.chat_history[i-1]['content']))
                 except: st.write(msg['content'])
 
     if prompt := st.chat_input("Hỏi tôi về dữ liệu thiết bị..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.spinner("Gemini 1.5 Flash is thinking..."):
-            result, updated_hist = chatbot(prompt, st.session_state.kg_df, st.session_state.chat_history, st.session_state.gemini_model)
+        with st.spinner("Đang phân tích query..."):
+            result, updated_hist = chatbot(prompt, st.session_state.kg_df, st.session_state.chat_history)
             if result:
                 st.session_state.chat_history = updated_hist
                 save_chat_history_by_date({"timestamp": datetime.now().isoformat(), "query": prompt, "response": result})
@@ -196,16 +208,19 @@ def main():
         with open('config.json', 'r') as f: config = json.load(f)
     except: pass
 
+    # Ensure Knowledge Graph is loaded
+    if st.session_state.kg_df.empty:
+        st.session_state.kg_df = load_knowledge_graph(config['knowledge_graph']['path'])
+
     # Initialization
-    model, m_name = get_ai_model(config['api']['gemini_api_key'])
     client = get_newsense_client(config['api']['base_url'], config['api']['tb_user'], config['api']['tb_pass'])
+    m_name = "Offline Engine"
     
-    if model and client:
-        st.session_state.gemini_model = model
+    if client:
         st.session_state.newsense_client = client
         st.session_state.device_map = get_cached_device_map(client)
     else:
-        st.error("Model or Client failed to initialize. Check config.json")
+        st.error("Client failed to initialize. Check config.json")
         return
 
     # Sidebar
