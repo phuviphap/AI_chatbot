@@ -6,8 +6,11 @@ from datetime import datetime
 import plotly.graph_objects as go
 import time
 from concurrent.futures import ThreadPoolExecutor
-from offline_chatbot import NewsenseClient, chatbot, analyze_data
 import difflib
+import google.generativeai as genai
+
+# ⭐ THAY ĐỔI #1: Import từ chatbot_core mới (thêm EmbeddingKGMatcher)
+from chatbot_core import NewsenseClient, chatbot, analyze_data, EmbeddingKGMatcher
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -32,6 +35,31 @@ def get_cached_device_map(_client):
         return {d['name']: d['id'] for d in devices}
     except:
         return {}
+
+# ⭐ THAY ĐỔI #2: Cache EmbeddingKGMatcher (chỉ build 1 lần)
+@st.cache_resource
+def get_kg_matcher(kg_path, api_key):
+    """
+    Khởi tạo EmbeddingKGMatcher 1 lần duy nhất.
+    """
+    try:
+        if os.path.exists(kg_path):
+            genai.configure(api_key=api_key)
+            kg_df = pd.read_excel(kg_path)
+            print(f"📋 KG columns: {kg_df.columns.tolist()}")
+            print(f"📋 KG shape: {kg_df.shape}")
+            if not kg_df.empty:
+                return EmbeddingKGMatcher(kg_df)
+    except Exception as e:
+        print(f"⚠️ EmbeddingKGMatcher init failed: {e}")
+    return None
+    return None
+
+@st.cache_resource
+def get_gemini_model(api_key):
+    """Cache Gemini model instance."""
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel("gemini-2.0-flash")
 
 # --- INITIALIZE SESSION STATE ---
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
@@ -80,7 +108,10 @@ def fetch_data_parallel(devices, start, end):
     def fetch_single(info):
         d_name = info.get("Device")
         v_name = info.get("Tên biến")
-        d_id = dev_map.get(d_name) or dev_map.get(difflib.get_close_matches(d_name, dev_map.keys(), n=1, cutoff=0.7)[0] if difflib.get_close_matches(d_name, dev_map.keys()) else None)
+        d_id = dev_map.get(d_name) or dev_map.get(
+            difflib.get_close_matches(d_name, dev_map.keys(), n=1, cutoff=0.7)[0]
+            if difflib.get_close_matches(d_name, dev_map.keys()) else None
+        )
         if d_id:
             try:
                 df = client.get_timeseries(d_id, v_name, start, end)
@@ -96,12 +127,14 @@ def fetch_status_parallel(devices):
     client = st.session_state.newsense_client
     dev_map = st.session_state.device_map
 
-    # Group variables by device id
     device_groups = {}
     for info in devices:
         d_name = info.get("Device")
         v_name = info.get("Tên biến")
-        d_id = dev_map.get(d_name) or dev_map.get(difflib.get_close_matches(d_name, dev_map.keys(), n=1, cutoff=0.7)[0] if difflib.get_close_matches(d_name, dev_map.keys()) else None)
+        d_id = dev_map.get(d_name) or dev_map.get(
+            difflib.get_close_matches(d_name, dev_map.keys(), n=1, cutoff=0.7)[0]
+            if difflib.get_close_matches(d_name, dev_map.keys()) else None
+        )
         if d_id and v_name:
             if d_id not in device_groups:
                 device_groups[d_id] = {"name": d_name, "keys": []}
@@ -133,7 +166,10 @@ def chatbot_interaction_page():
             else:
                 try:
                     res = json.loads(msg['content'])
-                    st.json(res)
+                    # Hiện tóm tắt thay vì JSON raw
+                    loc = res.get("location", "")
+                    period = f"{res.get('start_date', '')} → {res.get('end_date', '')}"
+                    st.caption(f"📍 {loc} | 📅 {period}")
                     devices = res.get("devices", [])
                     intent = res.get("intent", "chart")
                     if devices:
@@ -155,21 +191,41 @@ def chatbot_interaction_page():
                                 
                                 if st.toggle("Show Charts", value=True, key=f"tgl_{i}"):
                                     for idx, item in enumerate(data):
-                                        fig = go.Figure(go.Scatter(x=item['data']['ts'], y=item['data']['value'], name=item['label']))
+                                        fig = go.Figure(go.Scatter(
+                                            x=item['data']['ts'], y=item['data']['value'], name=item['label']
+                                        ))
+                                        fig.update_layout(title=item['label'], xaxis_title="Thời gian", yaxis_title="Giá trị")
                                         st.plotly_chart(fig, use_container_width=True, key=f"ch_{i}_{idx}")
                                     
+                                    # ⭐ THAY ĐỔI: truyền gemini_model vào analyze_data
                                     if st.button("🔍 Analysis", key=f"an_btn_{i}"):
                                         with st.spinner("Analyzing..."):
-                                            st.info(analyze_data(data, st.session_state.chat_history[i-1]['content']))
+                                            gemini_model = st.session_state.get("gemini_model")
+                                            st.info(analyze_data(
+                                                data,
+                                                st.session_state.chat_history[i-1]['content'],
+                                                gemini_model
+                                            ))
                 except: st.write(msg['content'])
 
     if prompt := st.chat_input("Hỏi tôi về dữ liệu thiết bị..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.spinner("Đang phân tích query..."):
-            result, updated_hist = chatbot(prompt, st.session_state.kg_df, st.session_state.chat_history)
+            # ⭐ THAY ĐỔI #3: Truyền gemini_model + kg_matcher vào chatbot()
+            result, updated_hist = chatbot(
+                prompt,
+                st.session_state.kg_df,
+                st.session_state.chat_history,
+                st.session_state.gemini_model,
+                kg_matcher=st.session_state.get("kg_matcher")  # ← thêm dòng này
+            )
             if result:
                 st.session_state.chat_history = updated_hist
-                save_chat_history_by_date({"timestamp": datetime.now().isoformat(), "query": prompt, "response": result})
+                save_chat_history_by_date({
+                    "timestamp": datetime.now().isoformat(),
+                    "query": prompt,
+                    "response": result
+                })
         st.rerun()
 
 def history_page():
@@ -195,7 +251,9 @@ def kg_editor_page(config):
     if st.button("💾 Save Knowledge Graph"):
         edited_df.to_excel(config['knowledge_graph']['path'], index=False)
         st.session_state.kg_df = edited_df
-        st.success("Saved!")
+        # ⭐ Rebuild embedding khi KG thay đổi
+        st.session_state.kg_matcher = EmbeddingKGMatcher(edited_df)
+        st.success("Saved! Embedding index rebuilt.")
 
 # --- MAIN APP ---
 def main():
@@ -203,19 +261,16 @@ def main():
         "api": {"gemini_api_key": "YOUR_KEY", "base_url": "URL", "tb_user": "USER", "tb_pass": "PASS"},
         "knowledge_graph": {"path": "knowledge_graph.xlsx"}
     }
-    # In real use, load from your config.json
     try:
         with open('config.json', 'r') as f: config = json.load(f)
     except: pass
 
-    # Ensure Knowledge Graph is loaded
+    # Load KG
     if st.session_state.kg_df.empty:
         st.session_state.kg_df = load_knowledge_graph(config['knowledge_graph']['path'])
 
-    # Initialization
+    # Init Newsense client
     client = get_newsense_client(config['api']['base_url'], config['api']['tb_user'], config['api']['tb_pass'])
-    m_name = "Offline Engine"
-    
     if client:
         st.session_state.newsense_client = client
         st.session_state.device_map = get_cached_device_map(client)
@@ -223,10 +278,46 @@ def main():
         st.error("Client failed to initialize. Check config.json")
         return
 
+    # ⭐ THAY ĐỔI: Init Gemini model + EmbeddingKGMatcher (cached)
+    gemini_model = get_gemini_model(config['api']['gemini_api_key'])
+    st.session_state.gemini_model = gemini_model
+
+    kg_matcher = get_kg_matcher(config['knowledge_graph']['path'], config['api']['gemini_api_key'])
+    st.session_state.kg_matcher = kg_matcher
+
+    # DEBUG: nếu kg_matcher fail, thử test trực tiếp
+    if not kg_matcher:
+        try:
+            genai.configure(api_key=config['api']['gemini_api_key'])
+            test = genai.embed_content(model="models/gemini-embedding-001", content="test", task_type="RETRIEVAL_QUERY")
+            st.sidebar.success(f"✅ Embedding API works! Vector dim: {len(test['embedding'])}")
+        except Exception as e:
+            st.sidebar.error(f"❌ Embedding API error: {e}")
+        
+        # Check KG
+        kg_path = config['knowledge_graph']['path']
+        if os.path.exists(kg_path):
+            test_df = pd.read_excel(kg_path)
+            st.sidebar.info(f"KG cols: {test_df.columns.tolist()[:5]}... shape: {test_df.shape}")
+        else:
+            st.sidebar.error(f"❌ KG file not found: {kg_path}")
+
+    m_name = "Gemini 2.0 Flash + Embedding"
+
     # Sidebar
     with st.sidebar:
         st.title("🤖 AI Chatbot")
         st.success(f"Model: {m_name}")
+
+        # ⭐ Hiển thị trạng thái embedding
+        if kg_matcher:
+            st.caption(f"📦 KG Index: {len(kg_matcher.kg_texts)} devices cached")
+        else:
+            st.warning("⚠️ KG Matcher not initialized — using fallback mode")
+        
+        if not st.session_state.kg_df.empty:
+            st.caption(f"📋 KG: {st.session_state.kg_df.shape[0]} rows, cols: {list(st.session_state.kg_df.columns)}")
+
         st.divider()
         if st.button("💬 Chatbot", use_container_width=True): st.session_state.active_page = "💬 Chatbot"
         if st.button("📜 History", use_container_width=True): st.session_state.active_page = "📜 History"

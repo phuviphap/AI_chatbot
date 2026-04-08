@@ -1,6 +1,6 @@
 {
   "api": {
-    "gemini_api_key": "AIzaSyDyYPlHEvtoW7Bfmy4ZoNmNuynkW7QiPds",
+    "gemini_api_key": "AIzaSyA0BwJnPG9Z9QnPneoJnLepLydj6chjVTw",
     "base_url": "https://newsense.viphap.com/api",
     "tb_user": "phund.rm2@viphap.com",
     "tb_pass": "Machine_learning99"
@@ -10,7 +10,7 @@
     "password": "Machine_learning99"
   },
   "knowledge_graph": {
-    "path": "C:\\Users\\ASUS\\OneDrive\\Desktop\\AI_chatbot\\Knowledge_graph.xlsx"
+    "path": "D:\\Chatbot\\AI_chatbot\\Knowledge_graph.xlsx"
   }
 }
 

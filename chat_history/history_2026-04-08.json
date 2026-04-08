@@ -1,0 +1,29 @@
+[
+  {
+    "timestamp": "2026-04-08T11:51:41.086977",
+    "query": "Dữ liệu đốt SK5 3 tháng gần đây",
+    "response": {
+      "location": "đốt SK5",
+      "start_date": "2026-01-08",
+      "end_date": "2026-04-08",
+      "is_latest": false,
+      "devices": [
+        {
+          "Device": "P19 - PT100",
+          "Tên biến": "Pt100_4w(5)",
+          "Tên thiết bị": "Nhiệt độ đốt SK5 (P19_PT100_SK5)"
+        },
+        {
+          "Device": "ACC_RM2_FFT_01",
+          "Tên biến": "P19_Qb_SK5_var_1_freq",
+          "Tên thiết bị": "Dao động đốt SK5 P19"
+        },
+        {
+          "Device": "P19 - SG",
+          "Tên biến": "Contrainte(15)",
+          "Tên thiết bị": "Ứng suất bản đáy hạ lưu đốt SK5 (SG3_SK5)"
+        }
+      ]
+    }
+  }
+]
